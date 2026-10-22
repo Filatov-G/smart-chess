@@ -2275,12 +2275,36 @@
   function setPlayerSide(side) { playerSide = side; newGame(); }
   function setBotLevel(level) { botDepth = parseInt(level); }
 
+  // ==========================================
+  // ЧАСТЬ 3: ПЕРЕМЕННЫЕ ИГРЫ (ОБЪЯВЛЕНЫ ЗАРАНЕЕ)
+  // ==========================================
+  const T = {
+    turnWhite: 'Белые', turnBlack: 'Чёрные', check: '⚠️ ШАХ!', checkmate: '🏁 МАТ! Победили:',
+    stalemate: '🤝 ПАТ! Ничья.', draw50: '🤝 НИЧЬЯ! Правило 50 ходов.', drawRepetition: '🤝 НИЧЬЯ! Треекратное повторение позиции.',
+    whiteWins: 'Белые', blackWins: 'Чёрные', noMoves: 'Ходов пока нет', resignConfirm: 'Сдаться и завершить партию?',
+    resignWhite: '🏳️ Белые сдались! Победили Чёрные.', resignBlack: '🏳️ Чёрные сдались! Победили Белые.',
+    resetScoreConfirm: 'Сбросить счёт этого профиля?', errorEmptyName: 'Введи имя!', errorNameExists: 'Такое имя уже есть!',
+    deleteProfileConfirm: 'Удалить профиль', profileDefault: 'Игрок'
+  };
+
+  let currentMode = 'local';
+  let playerSide = 'w';
+  let soundEnabled = true;
+  let isAnimating = false;
+  let flipped = false;
+  let botDepth = 2;
+  let currentTheme = 'emerald';
+
   const PIECES = { 'wK': '♔', 'wQ': '♕', 'wR': '♖', 'wB': '♗', 'wN': '♘', 'wP': '♙', 'bK': '♚', 'bQ': '♛', 'bR': '♜', 'bB': '♝', 'bN': '♞', 'bP': '♟' };
   const PIECE_VALUE = { 'P': 100, 'N': 320, 'B': 330, 'R': 500, 'Q': 900, 'K': 20000 };
+  
   let board = [], currentTurn = 'w', selectedCell = null, possibleMoves = [], lastMove = null, moveHistory = [], gameOver = false, kingInCheckPos = null, botThinking = false;
   let castlingRights = { wK: true, wQ: true, bK: true, bQ: true }, enPassantTarget = null, positionHistory = [], halfMoveClock = 0, stateStack = [], gameResultRecorded = false;
   const boardEl = document.getElementById('board');
 
+  // ==========================================
+  // ЧАСТЬ 4: ЛОГИКА ШАХМАТ
+  // ==========================================
   function newGame() {
     board = [ ['bR','bN','bB','bQ','bK','bB','bN','bR'], ['bP','bP','bP','bP','bP','bP','bP','bP'], [null,null,null,null,null,null,null,null], [null,null,null,null,null,null,null,null], [null,null,null,null,null,null,null,null], [null,null,null,null,null,null,null,null], ['wP','wP','wP','wP','wP','wP','wP','wP'], ['wR','wN','wB','wQ','wK','wB','wN','wR'] ];
     currentTurn = 'w'; selectedCell = null; possibleMoves = []; lastMove = null; moveHistory = []; gameOver = false; kingInCheckPos = null; botThinking = false; isAnimating = false;
