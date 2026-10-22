@@ -1321,8 +1321,9 @@
       
       <div id="auth-error" style="color: #f87171; font-size: 13px; margin-bottom: 10px; display: none;"></div>
       
-      <button class="btn-confirm" id="auth-submit-btn" onclick="handleAuthSubmit()">Войти</button>
-      <button class="btn-cancel" onclick="toggleAuthMode()" id="auth-toggle-btn" style="margin-top: 10px;">Нет аккаунта? Зарегистрироваться</button>
+      <button class="btn-confirm" id="auth-submit-btn">Войти</button>
+      <button class="btn-cancel" id="auth-guest-btn" style="margin-top: 10px; background: rgba(16,185,129,0.1); border-color: var(--emerald); color: var(--emerald-light);">👤 Играть как гость</button>
+      <button class="btn-cancel" id="auth-toggle-btn" style="margin-top: 10px;">Нет аккаунта? Зарегистрироваться</button>
     </div>
   </div>
 
@@ -1344,7 +1345,7 @@
       </div>
       <div class="nav-right">
         <div class="profile-menu-wrapper" id="profile-menu-wrapper">
-          <button class="profile-btn" onclick="toggleProfileMenu(event)">
+          <button class="profile-btn" id="profile-menu-btn">
             <div class="profile-avatar" id="current-avatar">?</div>
             <span class="profile-name" id="current-name">Войти</span>
             <span class="arrow">▼</span>
@@ -1431,11 +1432,11 @@
     </div>
 
     <div class="controls">
-      <button class="mode-btn active" data-mode="local" onclick="setMode('local')">
+      <button class="mode-btn active" data-mode="local" id="mode-local">
         <span class="icon">👥</span>
         <span>Локально (2 игрока)</span>
       </button>
-      <button class="mode-btn" data-mode="bot" onclick="setMode('bot')">
+      <button class="mode-btn" data-mode="bot" id="mode-bot">
         <span class="icon">🤖</span>
         <span>Против бота</span>
       </button>
@@ -1444,14 +1445,14 @@
     <div class="settings-row">
       <div class="setting-group" id="side-select-group" style="display: none;">
         <label>Играть за:</label>
-        <select id="player-side" onchange="setPlayerSide(this.value)">
+        <select id="player-side">
           <option value="w">⚪ Белые</option>
           <option value="b">⚫ Чёрные</option>
         </select>
       </div>
       <div class="setting-group" id="level-select-group" style="display: none;">
         <label>🤖 Уровень:</label>
-        <select id="bot-level" onchange="setBotLevel(this.value)">
+        <select id="bot-level">
           <option value="1">Лёгкий</option>
           <option value="2" selected>Средний</option>
           <option value="3">Сложный</option>
@@ -1459,7 +1460,7 @@
       </div>
       <div class="setting-group">
         <label>🎨 Тема:</label>
-        <select id="theme-toggle" onchange="setTheme(this.value)">
+        <select id="theme-toggle">
           <option value="emerald" selected>Изумруд</option>
           <option value="classic">Классика</option>
           <option value="night">Ночь</option>
@@ -1468,7 +1469,7 @@
       </div>
       <div class="setting-group">
         <label>🔊 Звук:</label>
-        <select id="sound-toggle" onchange="toggleSound(this.value)">
+        <select id="sound-toggle">
           <option value="on">Вкл</option>
           <option value="off">Выкл</option>
         </select>
@@ -1497,13 +1498,13 @@
             <strong id="turn-text">Белые</strong>
           </div>
           <div class="btn-grid">
-            <button class="btn-primary" onclick="newGame()">🔄 Новая</button>
-            <button class="btn-danger" onclick="resign()">🏳️ Сдаться</button>
+            <button class="btn-primary" id="btn-new-game">🔄 Новая</button>
+            <button class="btn-danger" id="btn-resign">🏳️ Сдаться</button>
           </div>
-          <button class="btn-warning" onclick="showHint()">💡 Подсказка</button>
+          <button class="btn-warning" id="btn-hint">💡 Подсказка</button>
           <div class="btn-grid" style="margin-top: 8px;">
-            <button class="btn-secondary" onclick="undoMove()" id="undo-btn">↩️ Отменить</button>
-            <button class="btn-secondary" onclick="flipBoard()">🔄 Перевернуть</button>
+            <button class="btn-secondary" id="btn-undo">↩️ Отменить</button>
+            <button class="btn-secondary" id="btn-flip">🔄 Перевернуть</button>
           </div>
         </div>
 
@@ -1734,7 +1735,7 @@
         </div>
         <div class="update-body">
           <h4><span class="tag">Облако</span>Синхронизация аккаунтов</h4>
-          <p>Добавлена авторизация через Supabase. Теперь ваш счёт сохраняется на сервере, и вы можете играть с любого устройства!</p>
+          <p>Добавлена авторизация через Supabase. Теперь ваш счёт сохраняется на сервере, и вы можете играть с любого устройства! А для тех, кто не хочет регистрироваться, добавлен режим "Гость".</p>
         </div>
       </div>
     </div>
@@ -2140,6 +2141,32 @@
       }
   }
 
+  async function playAsGuest() {
+      document.getElementById('auth-guest-btn').disabled = true;
+      document.getElementById('auth-guest-btn').textContent = 'Загрузка...';
+      try {
+          const { data, error } = await supabase.auth.signInAnonymously();
+          if (error) throw error;
+          
+          if (data.user) {
+              const guestName = 'Гость_' + Math.floor(1000 + Math.random() * 9000);
+              // Пытаемся создать профиль, игнорируем ошибку, если он уже есть
+              await supabase.from('profiles').insert({
+                  id: data.user.id,
+                  username: guestName,
+                  wins: 0, losses: 0, draws: 0
+              });
+          }
+          document.getElementById('auth-overlay').classList.remove('active');
+          await loadUserProfile();
+      } catch (err) {
+          showAuthError(err.message);
+      } finally {
+          document.getElementById('auth-guest-btn').disabled = false;
+          document.getElementById('auth-guest-btn').textContent = '👤 Играть как гость';
+      }
+  }
+
   function showAuthError(msg) {
       const el = document.getElementById('auth-error');
       el.textContent = msg;
@@ -2165,8 +2192,8 @@
       if (data) {
           currentProfile = data;
       } else {
-          // Если профиля нет (например, при каком-то сбое), создаем дефолтный
-          currentProfile = { username: user.email.split('@')[0], wins: 0, losses: 0, draws: 0 };
+          // Если профиля нет (например, при сбое), создаем дефолтный
+          currentProfile = { username: 'Игрок', wins: 0, losses: 0, draws: 0 };
       }
       
       updateProfileUI();
@@ -2562,10 +2589,29 @@
   }
 
   // ==========================================
-  // Инициализация
+  // Инициализация и привязка событий
   // ==========================================
   loadTheme(); 
   
+  // Привязка кнопок интерфейса (чтобы не было ошибок onclick)
+  document.getElementById('btn-new-game').addEventListener('click', newGame);
+  document.getElementById('btn-resign').addEventListener('click', resign);
+  document.getElementById('btn-hint').addEventListener('click', showHint);
+  document.getElementById('btn-undo').addEventListener('click', undoMove);
+  document.getElementById('btn-flip').addEventListener('click', flipBoard);
+  document.getElementById('mode-local').addEventListener('click', () => setMode('local'));
+  document.getElementById('mode-bot').addEventListener('click', () => setMode('bot'));
+  document.getElementById('player-side').addEventListener('change', (e) => setPlayerSide(e.target.value));
+  document.getElementById('bot-level').addEventListener('change', (e) => setBotLevel(e.target.value));
+  document.getElementById('theme-toggle').addEventListener('change', (e) => setTheme(e.target.value));
+  document.getElementById('sound-toggle').addEventListener('change', (e) => toggleSound(e.target.value));
+  document.getElementById('profile-menu-btn').addEventListener('click', toggleProfileMenu);
+  
+  // Привязка кнопок авторизации
+  document.getElementById('auth-submit-btn').addEventListener('click', handleAuthSubmit);
+  document.getElementById('auth-guest-btn').addEventListener('click', playAsGuest);
+  document.getElementById('auth-toggle-btn').addEventListener('click', toggleAuthMode);
+
   // Проверяем, залогинен ли пользователь при запуске
   (async () => {
       await loadUserProfile();
