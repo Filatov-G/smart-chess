@@ -71,7 +71,7 @@
     min-height: 100vh;
   }
 
-  /* ===== ПРОФИЛЬ ===== */
+  /* ===== ПРОФИЛЬ И АВТОРИЗАЦИЯ ===== */
   .profile-overlay {
     display: none;
     position: fixed;
@@ -124,7 +124,6 @@
     font-weight: 600;
     outline: none;
     text-align: center;
-    margin-bottom: 16px;
     transition: border-color 0.2s;
   }
 
@@ -148,6 +147,7 @@
     font-size: 15px;
     transition: all 0.25s;
     box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+    margin-top: 16px;
   }
 
   .profile-modal .btn-confirm:hover {
@@ -324,15 +324,6 @@
 
   .profile-menu-wrapper.open .profile-dropdown { display: block; }
 
-  .profile-dropdown-title {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--emerald);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 8px 12px 6px;
-  }
-
   .profile-item {
     display: flex;
     align-items: center;
@@ -343,25 +334,9 @@
     transition: all 0.2s;
   }
 
-  .profile-item:hover { background: var(--bg-card-2); }
-
   .profile-item.current {
     background: rgba(16,185,129,0.15);
     border: 1px solid var(--border);
-  }
-
-  .profile-item .avatar {
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, var(--emerald), var(--emerald-dark));
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    color: white;
-    font-weight: 700;
-    flex-shrink: 0;
   }
 
   .profile-item .info { flex: 1; min-width: 0; }
@@ -386,54 +361,6 @@
   .profile-item .stats .w { color: #34d399; }
   .profile-item .stats .l { color: #f87171; }
   .profile-item .stats .d { color: var(--gold); }
-
-  .profile-item .delete-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-dim);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 4px 6px;
-    border-radius: 6px;
-    transition: all 0.2s;
-    opacity: 0;
-  }
-
-  .profile-item:hover .delete-btn { opacity: 1; }
-  .profile-item .delete-btn:hover { background: rgba(220,38,38,0.2); color: #f87171; }
-
-  .profile-dropdown-sep {
-    height: 1px;
-    background: var(--border);
-    margin: 6px 8px;
-  }
-
-  .profile-add-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: var(--emerald);
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  .profile-add-btn:hover { background: rgba(16,185,129,0.1); }
-
-  .profile-add-btn .plus-icon {
-    width: 32px;
-    height: 32px;
-    background: rgba(16,185,129,0.15);
-    border: 1px dashed var(--emerald);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-  }
 
   /* ===== HERO ===== */
   .hero {
@@ -1381,15 +1308,21 @@
 </head>
 <body>
 
-  <!-- МОДАЛЬНОЕ ОКНО ПРОФИЛЯ -->
-  <div class="profile-overlay" id="profile-create-overlay">
+  <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ -->
+  <div class="profile-overlay" id="auth-overlay">
     <div class="profile-modal">
-      <div class="modal-icon">👤</div>
-      <h2 id="profile-create-title">Как тебя зовут?</h2>
-      <p class="modal-sub" id="profile-create-sub">Введи имя, чтобы сохранять свой счёт партий</p>
-      <input type="text" id="profile-name-input" maxlength="20" placeholder="Например: Ваня" autocomplete="off">
-      <button class="btn-confirm" id="profile-create-btn" onclick="confirmProfileCreate()">Создать профиль</button>
-      <button class="btn-cancel" id="profile-cancel-btn" onclick="cancelProfileCreate()" style="display: none;">Отмена</button>
+      <div class="modal-icon" id="auth-icon">♟️</div>
+      <h2 id="auth-title">Вход в аккаунт</h2>
+      <p class="modal-sub" id="auth-sub">Войдите, чтобы сохранять свой счёт на любом устройстве</p>
+      
+      <input type="email" id="auth-email" placeholder="Email (например, ivan@mail.ru)" autocomplete="off" style="margin-bottom: 10px;">
+      <input type="password" id="auth-password" placeholder="Пароль (мин. 6 символов)" autocomplete="off" style="margin-bottom: 10px;">
+      <input type="text" id="auth-username" placeholder="Ваше имя в игре (Никнейм)" autocomplete="off" style="display: none; margin-bottom: 10px;">
+      
+      <div id="auth-error" style="color: #f87171; font-size: 13px; margin-bottom: 10px; display: none;"></div>
+      
+      <button class="btn-confirm" id="auth-submit-btn" onclick="handleAuthSubmit()">Войти</button>
+      <button class="btn-cancel" onclick="toggleAuthMode()" id="auth-toggle-btn" style="margin-top: 10px;">Нет аккаунта? Зарегистрироваться</button>
     </div>
   </div>
 
@@ -1413,17 +1346,12 @@
         <div class="profile-menu-wrapper" id="profile-menu-wrapper">
           <button class="profile-btn" onclick="toggleProfileMenu(event)">
             <div class="profile-avatar" id="current-avatar">?</div>
-            <span class="profile-name" id="current-name">Профиль</span>
+            <span class="profile-name" id="current-name">Войти</span>
             <span class="arrow">▼</span>
           </button>
           <div class="profile-dropdown" id="profile-dropdown">
-            <div class="profile-dropdown-title">Профили</div>
+            <div class="profile-dropdown-title">Аккаунт</div>
             <div id="profiles-list"></div>
-            <div class="profile-dropdown-sep"></div>
-            <div class="profile-add-btn" onclick="openCreateProfile()">
-              <div class="plus-icon">+</div>
-              <span>Новый профиль</span>
-            </div>
           </div>
         </div>
       </div>
@@ -1595,7 +1523,6 @@
               <div class="lbl">Ничьи</div>
             </div>
           </div>
-          <button class="btn-secondary" onclick="resetScore()" style="width: 100%; margin-top: 10px; font-size: 11px;">🔄 Сбросить счёт</button>
         </div>
 
         <div class="panel-card">
@@ -1728,7 +1655,7 @@
         </div>
         <ul class="af-list">
           <li><b>HTML/CSS/JS</b> — без фреймворков</li>
-          <li><b>Без сервера</b> — всё в браузере</li>
+          <li><b>Supabase</b> — надёжное хранение аккаунтов</li>
           <li><b>Адаптивно</b> — ПК, планшет, телефон</li>
           <li><b>Web Audio API</b> — звуки без файлов</li>
         </ul>
@@ -1797,6 +1724,17 @@
         <div class="update-body">
           <h4><span class="tag">Звуки</span>Звуковое сопровождение</h4>
           <p>Добавлены звуки ходов, взятия фигур, шаха и окончания партии. Все звуки синтезируются прямо в браузере — никаких внешних файлов.</p>
+        </div>
+      </div>
+      
+      <div class="update-item">
+        <div class="update-date">
+          <div class="day">22</div>
+          <div class="month">Окт</div>
+        </div>
+        <div class="update-body">
+          <h4><span class="tag">Облако</span>Синхронизация аккаунтов</h4>
+          <p>Добавлена авторизация через Supabase. Теперь ваш счёт сохраняется на сервере, и вы можете играть с любого устройства!</p>
         </div>
       </div>
     </div>
@@ -1876,7 +1814,19 @@
     </div>
   </div>
 
-<script>
+<script type="module">
+  // ==========================================
+  // ЧАСТЬ 0: SUPABASE (АВТОРИЗАЦИЯ И БАЗА)
+  // ==========================================
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+  const supabaseUrl = 'https://pyjsjakemacyblyjacem.supabase.co';
+  const supabaseKey = 'sb_publishable_wZNcSLKygTvfO-yM7RvRfA__OvFT9SW';
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  
+  let currentUser = null;
+  let currentProfile = null;
+
   // ==========================================
   // ЧАСТЬ 1: ИИ-ПОМОЩНИК (ЛОГИКА ИЗ УМНОГО ГОРОДА)
   // ==========================================
@@ -2131,109 +2081,172 @@
 
 
   // ==========================================
-  // ЧАСТЬ 2: ЛОГИКА ШАХМАТ
+  // ЧАСТЬ 2: ЛОГИКА АВТОРИЗАЦИИ (Supabase)
   // ==========================================
-  const T = {
-    turnWhite: 'Белые', turnBlack: 'Чёрные', check: '⚠️ ШАХ!', checkmate: '🏁 МАТ! Победили:',
-    stalemate: '🤝 ПАТ! Ничья.', draw50: '🤝 НИЧЬЯ! Правило 50 ходов.', drawRepetition: '🤝 НИЧЬЯ! Треекратное повторение позиции.',
-    whiteWins: 'Белые', blackWins: 'Чёрные', noMoves: 'Ходов пока нет', resignConfirm: 'Сдаться и завершить партию?',
-    resignWhite: '🏳️ Белые сдались! Победили Чёрные.', resignBlack: '🏳️ Чёрные сдались! Победили Белые.',
-    resetScoreConfirm: 'Сбросить счёт этого профиля?', errorEmptyName: 'Введи имя!', errorNameExists: 'Такое имя уже есть!',
-    deleteProfileConfirm: 'Удалить профиль', profileDefault: 'Игрок'
-  };
+  let isRegisterMode = false;
 
-  let currentMode = 'local';
-  let playerSide = 'w';
-  let soundEnabled = true;
-  let isAnimating = false;
-  let flipped = false;
-  let botDepth = 2;
-  let currentTheme = 'emerald';
+  function toggleAuthMode() {
+    isRegisterMode = !isRegisterMode;
+    document.getElementById('auth-title').textContent = isRegisterMode ? 'Регистрация' : 'Вход в аккаунт';
+    document.getElementById('auth-sub').textContent = isRegisterMode ? 'Создайте аккаунт, чтобы играть с любого устройства' : 'Войдите, чтобы сохранять свой счёт';
+    document.getElementById('auth-username').style.display = isRegisterMode ? 'block' : 'none';
+    document.getElementById('auth-submit-btn').textContent = isRegisterMode ? 'Зарегистрироваться' : 'Войти';
+    document.getElementById('auth-toggle-btn').textContent = isRegisterMode ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться';
+    document.getElementById('auth-error').style.display = 'none';
+  }
 
-  let profiles = [];
-  let currentProfileId = null;
+  async function handleAuthSubmit() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const username = document.getElementById('auth-username').value.trim();
+    const errorEl = document.getElementById('auth-error');
+    
+    if (!email || !password) return showAuthError('Заполните email и пароль');
+    if (isRegisterMode && !username) return showAuthError('Введите ваш никнейм');
 
-  function loadProfiles() {
-    try { const saved = localStorage.getItem('chess_profiles'); if (saved) profiles = JSON.parse(saved); } catch (e) { profiles = []; }
-    try { currentProfileId = localStorage.getItem('chess_current_profile'); } catch (e) { currentProfileId = null; }
-    if (!profiles || profiles.length === 0 || !currentProfileId || !profiles.find(p => p.id === currentProfileId)) {
-      if (profiles && profiles.length > 0) { currentProfileId = profiles[0].id; saveProfiles(); } else { openCreateProfile(true); return; }
+    document.getElementById('auth-submit-btn').disabled = true;
+    document.getElementById('auth-submit-btn').textContent = 'Загрузка...';
+
+    try {
+      if (isRegisterMode) {
+        // Регистрация
+        const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+        if (authError) throw authError;
+        
+        // Создаем запись в таблице profiles
+        if (authData.user) {
+          const { error: profileError } = await supabase.from('profiles').insert({
+            id: authData.user.id,
+            username: username,
+            wins: 0, losses: 0, draws: 0
+          });
+          if (profileError) throw profileError;
+          alert('Регистрация успешна! Если Supabase требует подтверждение email, проверьте почту. Иначе вы уже вошли.');
+        }
+      } else {
+        // Вход
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
+      
+      // Если всё ок, закрываем окно и загружаем профиль
+      document.getElementById('auth-overlay').classList.remove('active');
+      await loadUserProfile();
+      
+    } catch (err) {
+      showAuthError(err.message);
+    } finally {
+      document.getElementById('auth-submit-btn').disabled = false;
+      document.getElementById('auth-submit-btn').textContent = isRegisterMode ? 'Зарегистрироваться' : 'Войти';
     }
+  }
+
+  function showAuthError(msg) {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  async function loadUserProfile() {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      currentUser = null;
+      currentProfile = null;
+      updateProfileUI();
+      document.getElementById('auth-overlay').classList.add('active');
+      return;
+    }
+
+    currentUser = user;
+    
+    // Получаем данные из таблицы profiles
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    
+    if (data) {
+      currentProfile = data;
+    } else {
+      // Если профиля нет (например, при каком-то сбое), создаем дефолтный
+      currentProfile = { username: user.email.split('@')[0], wins: 0, losses: 0, draws: 0 };
+    }
+    
     updateProfileUI();
+    updateScoreDisplay();
   }
-  function saveProfiles() {
-    try { localStorage.setItem('chess_profiles', JSON.stringify(profiles)); localStorage.setItem('chess_current_profile', currentProfileId || ''); } catch (e) {}
+
+  async function logout() {
+    await supabase.auth.signOut();
+    currentUser = null;
+    currentProfile = null;
+    updateProfileUI();
+    updateScoreDisplay();
+    document.getElementById('auth-overlay').classList.add('active');
+    closeProfileMenu();
   }
-  function getCurrentProfile() { return profiles.find(p => p.id === currentProfileId) || null; }
-  function createProfile(name) {
-    name = (name || '').trim();
-    if (!name) { alert(T.errorEmptyName); return false; }
-    if (profiles.some(p => p.name.toLowerCase() === name.toLowerCase())) { alert(T.errorNameExists); return false; }
-    const id = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-    profiles.push({ id, name, score: { wins: 0, losses: 0, draws: 0 } });
-    currentProfileId = id; saveProfiles(); updateProfileUI(); return true;
-  }
-  function switchProfile(id) { if (!profiles.find(p => p.id === id)) return; currentProfileId = id; saveProfiles(); updateProfileUI(); updateScoreDisplay(); closeProfileMenu(); }
-  function deleteProfile(id, event) {
-    if (event) event.stopPropagation();
-    const profile = profiles.find(p => p.id === id); if (!profile) return;
-    if (!confirm(T.deleteProfileConfirm + ' «' + profile.name + '»?')) return;
-    profiles = profiles.filter(p => p.id !== id);
-    if (currentProfileId === id) { if (profiles.length > 0) currentProfileId = profiles[0].id; else currentProfileId = null; }
-    saveProfiles();
-    if (profiles.length === 0) openCreateProfile(true); else { updateProfileUI(); updateScoreDisplay(); }
-  }
+
   function updateProfileUI() {
-    const profile = getCurrentProfile(); const avatarEl = document.getElementById('current-avatar'); const nameEl = document.getElementById('current-name');
-    if (profile) { avatarEl.textContent = profile.name.charAt(0).toUpperCase(); nameEl.textContent = profile.name; } 
-    else { avatarEl.textContent = '?'; nameEl.textContent = T.profileDefault; }
-    renderProfilesList(); updateScoreDisplay();
+    const avatarEl = document.getElementById('current-avatar');
+    const nameEl = document.getElementById('current-name');
+    const dropdownList = document.getElementById('profiles-list');
+    
+    if (currentProfile) {
+      avatarEl.textContent = currentProfile.username.charAt(0).toUpperCase();
+      nameEl.textContent = currentProfile.username;
+      
+      dropdownList.innerHTML = `
+        <div class="profile-item current" style="justify-content: space-between;">
+          <div class="info">
+            <div class="name">${escapeHtml(currentProfile.username)}</div>
+            <div class="stats">Вы вошли в аккаунт</div>
+          </div>
+          <button class="btn-danger" style="padding: 6px 10px; font-size: 11px;" onclick="logout()">Выйти</button>
+        </div>
+      `;
+    } else {
+      avatarEl.textContent = '?';
+      nameEl.textContent = 'Войти';
+      dropdownList.innerHTML = '';
+    }
   }
-  function renderProfilesList() {
-    const listEl = document.getElementById('profiles-list'); if (!listEl) return;
-    if (profiles.length === 0) { listEl.innerHTML = ''; return; }
-    listEl.innerHTML = profiles.map(p => {
-      const isCurrent = p.id === currentProfileId; const initial = p.name.charAt(0).toUpperCase();
-      return `<div class="profile-item ${isCurrent ? 'current' : ''}" onclick="switchProfile('${p.id}')"><div class="avatar">${initial}</div><div class="info"><div class="name">${escapeHtml(p.name)}</div><div class="stats"><span class="w">✅ ${p.score.wins}</span><span class="l">❌ ${p.score.losses}</span><span class="d">🤝 ${p.score.draws}</span></div></div>${profiles.length > 1 ? `<button class="delete-btn" onclick="deleteProfile('${p.id}', event)" title="Удалить">✕</button>` : ''}</div>`;
-    }).join('');
+
+  function updateScoreDisplay() {
+    const w = document.getElementById('score-wins');
+    const l = document.getElementById('score-losses');
+    const d = document.getElementById('score-draws');
+    if (!currentProfile) {
+      if (w) w.textContent = '0'; if (l) l.textContent = '0'; if (d) d.textContent = '0';
+      return;
+    }
+    if (w) w.textContent = currentProfile.wins;
+    if (l) l.textContent = currentProfile.losses;
+    if (d) d.textContent = currentProfile.draws;
   }
+
+  async function addScoreToCurrentProfile(result) {
+    if (!currentUser || !currentProfile) return;
+    
+    const updates = {};
+    if (result === 'win') updates.wins = currentProfile.wins + 1;
+    else if (result === 'loss') updates.losses = currentProfile.losses + 1;
+    else updates.draws = currentProfile.draws + 1;
+
+    const { error } = await supabase.from('profiles').update(updates).eq('id', currentUser.id);
+    
+    if (!error) {
+      currentProfile.wins = updates.wins ?? currentProfile.wins;
+      currentProfile.losses = updates.losses ?? currentProfile.losses;
+      currentProfile.draws = updates.draws ?? currentProfile.draws;
+      updateScoreDisplay();
+    } else {
+      console.error('Ошибка обновления счета:', error);
+    }
+  }
+
   function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
   function toggleProfileMenu(event) { event.stopPropagation(); document.getElementById('profile-menu-wrapper').classList.toggle('open'); }
   function closeProfileMenu() { document.getElementById('profile-menu-wrapper').classList.remove('open'); }
   document.addEventListener('click', (e) => { const wrapper = document.getElementById('profile-menu-wrapper'); if (wrapper && !wrapper.contains(e.target)) closeProfileMenu(); });
 
-  let isFirstProfile = false;
-  function openCreateProfile(isFirst = false) {
-    isFirstProfile = isFirst; const overlay = document.getElementById('profile-create-overlay'); const input = document.getElementById('profile-name-input'); const cancelBtn = document.getElementById('profile-cancel-btn');
-    cancelBtn.style.display = isFirst ? 'none' : 'block'; overlay.classList.add('active'); input.value = '';
-    setTimeout(() => input.focus(), 100); closeProfileMenu();
-  }
-  function confirmProfileCreate() {
-    const input = document.getElementById('profile-name-input');
-    if (createProfile(input.value.trim())) { document.getElementById('profile-create-overlay').classList.remove('active'); input.value = ''; }
-  }
-  function cancelProfileCreate() {
-    if (isFirstProfile) return; document.getElementById('profile-create-overlay').classList.remove('active'); document.getElementById('profile-name-input').value = '';
-  }
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { const overlay = document.getElementById('profile-create-overlay'); if (overlay && overlay.classList.contains('active')) confirmProfileCreate(); }
-    if (e.key === 'Escape') { const overlay = document.getElementById('profile-create-overlay'); if (overlay && overlay.classList.contains('active') && !isFirstProfile) cancelProfileCreate(); }
-  });
-  function updateScoreDisplay() {
-    const profile = getCurrentProfile(); const w = document.getElementById('score-wins'); const l = document.getElementById('score-losses'); const d = document.getElementById('score-draws');
-    if (!profile) { if (w) w.textContent = '0'; if (l) l.textContent = '0'; if (d) d.textContent = '0'; return; }
-    if (w) w.textContent = profile.score.wins; if (l) l.textContent = profile.score.losses; if (d) d.textContent = profile.score.draws;
-  }
-  function resetScore() {
-    const profile = getCurrentProfile(); if (!profile) return;
-    if (!confirm(T.resetScoreConfirm)) return;
-    profile.score = { wins: 0, losses: 0, draws: 0 }; saveProfiles(); updateScoreDisplay(); renderProfilesList();
-  }
-  function addScoreToCurrentProfile(result) {
-    const profile = getCurrentProfile(); if (!profile) return;
-    if (result === 'win') profile.score.wins++; else if (result === 'loss') profile.score.losses++; else profile.score.draws++;
-    saveProfiles(); updateScoreDisplay(); renderProfilesList();
-  }
   function setTheme(theme) {
     currentTheme = theme; document.body.classList.remove('theme-classic', 'theme-night', 'theme-wood');
     if (theme !== 'emerald') document.body.classList.add('theme-' + theme);
@@ -2525,7 +2538,17 @@
     container.scrollTop = container.scrollHeight;
   }
 
-  loadTheme(); loadProfiles(); newGame();
+  // ==========================================
+  // Инициализация
+  // ==========================================
+  loadTheme(); 
+  
+  // Проверяем, залогинен ли пользователь при запуске
+  (async () => {
+    await loadUserProfile();
+    newGame();
+  })();
+
 </script>
 
 </body>
